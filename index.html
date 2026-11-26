@@ -171,16 +171,17 @@ input:focus-visible,button:focus-visible,a:focus-visible,[tabindex]:focus-visibl
 /* filters of the games tab: an icon in the sticky row (white = nothing chosen, coral = a filter is on) and a panel that drops from the bar on the right */
 #g-filters{display:block;position:absolute;top:100%;right:max(4vw,16px,calc((100% - 1240px)/2));z-index:5;margin:2px 0 0;max-width:calc(100vw - 2*max(4vw,16px))}
 #g-filters[hidden]{display:none}
-#g-filters .fbox{box-shadow:0 12px 34px #0000003d;border:1px solid var(--line);padding:14px;max-height:calc(100dvh - var(--stk,120px) - 14px);overflow-y:auto}
+#g-filters .fbox{--card:light-dark(#e3e3e3,#333);--card2:light-dark(#fff,#474747);--line:light-dark(#c6c6c6,#555);--sub:light-dark(#4f4f4f,#bdbdbd);box-shadow:0 18px 44px #00000066,0 2px 6px #0000003d;border:1px solid var(--line);padding:14px;max-height:calc(100dvh - var(--stk,120px) - 14px);overflow-y:auto}
 #g-filters .fg+.fg{border-top:1px solid var(--line);margin-top:14px;padding-top:14px}
 #g-filters .fl{margin:0 0 0 4px}
 #g-filters .chips{justify-content:flex-start}
 /* the choice in the panel reaches the lists only on «Применить»; the panel closes only by its two buttons */
 .fact{display:grid;grid-template-columns:1fr 1fr;gap:8px;border-top:1px solid var(--line);margin-top:14px;padding-top:14px}
 .fact button{min-height:46px;padding:0 18px;border-radius:999px;border:0;font:600 15px Onest,system-ui,sans-serif;cursor:pointer}
-.fact .fgo{background:var(--coral);color:#111}
-.fact .frs{background:var(--card2);color:var(--ink)}
-.fact .frs:hover{background:var(--line)}
+.fact .fgo{background:var(--mint);color:#10241a}
+.fact .fgo:hover{background:#8fe6be}
+.fact .frs{background:none;color:var(--sub);box-shadow:inset 0 0 0 1.5px var(--line)}
+.fact .frs:hover{color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--sub)}
 .fbtn{display:inline-grid;place-items:center;width:42px;height:42px;border:0;border-radius:50%;background:#fff;color:#111;cursor:pointer;flex:none;box-shadow:0 1px 0 var(--line)}
 .fbtn.on{background:var(--coral);color:#111}
 .fbtn[aria-expanded=true]{outline:2px solid var(--ink);outline-offset:2px}
