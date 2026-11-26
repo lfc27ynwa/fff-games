@@ -964,7 +964,7 @@ function monthly(p) {
 const gcS = {all: 'd', mon: 'm', lg: 'gl', po: 'gl'};
 const GCM = {d: ['Игровые дни', 'Игровых дней', '--mustard', 'игровых дней'], m: ['Матчи', 'Сыграно матчей', '--peri', 'матчей'], gl: ['Голы', 'Забито голов', '--mint', 'голов']};
 const GC = {all: {els: ['#m-chart'], by: 'month', modes: ['d', 'm', 'gl'], evs: () => mEs},          // the same games as in the list under it
-            mon: {els: ['#tm-chart'], by: 'day', modes: ['m', 'gl'], evs: () => D.evenings.filter(e => e.date.slice(0, 7) === topM)},
+            mon: {els: ['#tm-chart'], by: 'day', modes: ['gl'], both: true, evs: () => D.evenings.filter(e => e.date.slice(0, 7) === topM)},
             lg: {els: ['#lg-chart'], by: 'day', modes: ['gl'], evs: () => D.evenings.filter(e => e.kind === 'ecl-league')},
             po: {els: ['#po-chart', '#br-chart'], by: 'day', modes: ['gl'], evs: () => D.evenings.filter(e => e.kind.startsWith('ecl-') && e.kind !== 'ecl-league')}};
 const evGoals = e => e.teams.reduce((a, t) => a + t.res[3], 0), evMatches = e => Math.round(e.teams.reduce((a, t) => a + t.res[0] + t.res[1] + t.res[2], 0) / 2);
@@ -974,9 +974,14 @@ function drawGC(id) {
   const B = c.by === 'month'
     ? D.months.map(m => { const v = val(evs.filter(e => e.date.slice(0, 7) === m)); return {l: monLbl(m), g: m.slice(0, 4), v, tip: `${MONN[+m.slice(5) - 1]} ${m.slice(0, 4)} — ${M[3]}: ${v}`}; })
     : evs.map(e => { const v = val([e]); return {l: +e.date.slice(8), g: MONN[+e.date.slice(5, 7) - 1].toLowerCase(), v, tip: `${wd(e.date)}, ${fd(e.date)} — ${M[3]}: ${v}`}; });
-  const html = !evs.length ? '' : `<div class="mch"><h3>${M[1]}: <b>${String(val(evs)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}</b></h3>${c.modes.length > 1 ? `<div class="sw" role="group" data-gc="${id}" aria-label="Что показать">${c.modes.map(x => `<button type="button" data-v="${x}" aria-pressed="${x === k}">${GCM[x][0]}</button>`).join('')}</div>` : ''}</div>
+  const sp = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  const nm = evs.reduce((a, e) => a + evMatches(e), 0), ng = evs.reduce((a, e) => a + evGoals(e), 0);
+  // month of the digest: one chart (goals), the heading carries both totals, the note under it the goals per match
+  const head = c.both ? `Сыграно матчей: <b>${sp(nm)}</b><span class="cwd"> · </span><br class="cnr">Забито голов: <b>${sp(ng)}</b>` : `${M[1]}: <b>${sp(val(evs))}</b>`;
+  const note = (c.by === 'month' ? 'По месяцам.' : 'По игровым дням.') + (c.both && nm ? ` В среднем ${dec(ng / nm, 2)} гола за матч.` : '');
+  const html = !evs.length ? '' : `<div class="mch"><h3>${head}</h3>${c.modes.length > 1 ? `<div class="sw" role="group" data-gc="${id}" aria-label="Что показать">${c.modes.map(x => `<button type="button" data-v="${x}" aria-pressed="${x === k}">${GCM[x][0]}</button>`).join('')}</div>` : ''}</div>
     ${barChart(B, M[2])}
-    <p class="ex" style="font-size:13px;margin-top:8px">${c.by === 'month' ? 'По месяцам.' : 'По игровым дням.'}</p>`;
+    <p class="ex" style="font-size:13px;margin-top:8px">${note}</p>`;
   for (const q of c.els) $(q).innerHTML = html;
 }
 function analytics(p) {
