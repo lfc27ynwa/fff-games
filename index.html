@@ -515,6 +515,7 @@ tr.go:hover td{background:var(--card2)}
  .sched{display:block;background:var(--char2);border-radius:18px;padding:4px 14px;margin-top:14px}.sched div{display:grid;grid-template-columns:9em minmax(0,1fr);gap:10px;align-items:baseline;background:none;border-radius:0;padding:9px 0;font-size:13px}.sched div+div{border-top:1px solid #ffffff14}.sched b{font-size:14px;margin:0}.sched div:first-child span{display:inline}.brand{gap:12px}.tg{min-height:44px}
  .dots .r,.dots .ax{grid-template-columns:5.6em minmax(0,1fr) 2em}.who{gap:8px}.pbtn{width:36px;height:36px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+#tm-t{display:inline-grid;text-align:center}#tm-t>span{grid-area:1/1}#tm-t>.gh{visibility:hidden}
 </style>
 </head>
 <body>
@@ -1067,7 +1068,8 @@ function drawTop(T, S, sqEl, bEl, W, gkEl) {
 function topView() {
   const ms = Object.keys(D.tops).sort(); if (!topM || !D.tops[topM]) topM = ms[ms.length - 1];
   const i = ms.indexOf(topM), T = D.tops[topM];
-  $('#tm-t').textContent = `${MONN[+topM.slice(5) - 1]} ${topM.slice(0, 4)}`;
+  // the title keeps the width of the longest month name, so the arrows never move while flipping months
+  $('#tm-t').innerHTML = `<span>${MONN[+topM.slice(5) - 1]} ${topM.slice(0, 4)}</span>` + MONN.map(m => `<span class="gh" aria-hidden="true">${m} 0000</span>`).join('');
   $('#tm-prev').disabled = i <= 0; $('#tm-next').disabled = i >= ms.length - 1;
   $('#tm-s').textContent = `${T.days} ${plural(T.days, 'игровой день', 'игровых дня', 'игровых дней')} · считаются результаты команд игрока, в среднем за матч`;
   drawTop(T, topS, $('#tm-sq'), $('#tm-b'), TOPW.month);
