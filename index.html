@@ -169,11 +169,18 @@ input:focus-visible,button:focus-visible,a:focus-visible,[tabindex]:focus-visibl
 .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),max-content));gap:10px;margin-bottom:12px}
 .fbox{background:var(--card);border-radius:20px;padding:10px 12px 12px}
 /* filters of the games tab: an icon in the sticky row (white = nothing chosen, coral = a filter is on) and a panel that drops from the bar on the right */
-#g-filters{position:absolute;top:100%;right:max(4vw,16px);z-index:5;display:flex;flex-direction:column;align-items:flex-end;gap:8px;margin:2px 0 0;max-width:calc(100vw - 2*max(4vw,16px))}
+#g-filters{display:block;position:absolute;top:100%;right:max(4vw,16px,calc((100% - 1240px)/2));z-index:5;margin:2px 0 0;max-width:calc(100vw - 2*max(4vw,16px))}
 #g-filters[hidden]{display:none}
-#g-filters .fbox{box-shadow:0 12px 34px #0000003d;border:1px solid var(--line)}
-#g-filters .fl{text-align:right;margin:0 4px 8px 0}
-#g-filters .chips{justify-content:flex-end}
+#g-filters .fbox{box-shadow:0 12px 34px #0000003d;border:1px solid var(--line);padding:14px;max-height:calc(100dvh - var(--stk,120px) - 14px);overflow-y:auto}
+#g-filters .fg+.fg{border-top:1px solid var(--line);margin-top:14px;padding-top:14px}
+#g-filters .fl{margin:0 0 0 4px}
+#g-filters .chips{justify-content:flex-start}
+/* the choice in the panel reaches the lists only on «Применить»; the panel closes only by its two buttons */
+.fact{display:grid;grid-template-columns:1fr 1fr;gap:8px;border-top:1px solid var(--line);margin-top:14px;padding-top:14px}
+.fact button{min-height:46px;padding:0 18px;border-radius:999px;border:0;font:600 15px Onest,system-ui,sans-serif;cursor:pointer}
+.fact .fgo{background:var(--coral);color:#111}
+.fact .frs{background:var(--card2);color:var(--ink)}
+.fact .frs:hover{background:var(--line)}
 .fbtn{display:inline-grid;place-items:center;width:42px;height:42px;border:0;border-radius:50%;background:#fff;color:#111;cursor:pointer;flex:none;box-shadow:0 1px 0 var(--line)}
 .fbtn.on{background:var(--coral);color:#111}
 .fbtn[aria-expanded=true]{outline:2px solid var(--ink);outline-offset:2px}
@@ -530,7 +537,7 @@ tr.go:hover td{background:var(--card2)}
  <a href="#today" id="tab-today" hidden>Сегодня</a><a href="#top" data-g="dg">Дайджест</a><a href="#players" data-g="pl">Игроки</a><a href="#matches" data-g="gm">Игры</a><a href="#table" data-g="ecl">ЛЧ</a>
 </div></nav>
 <main>
-<div class="subnav" id="subnav" hidden><div id="sn-row"></div><div class="filters" id="g-filters" hidden><div class="fbox"><span class="fl" id="m-fl">Формат</span><div class="chips" id="m-f" role="group" aria-labelledby="m-fl"></div></div><div class="fbox"><span class="fl" id="m-yl">Год</span><div class="chips" id="m-y" role="group" aria-labelledby="m-yl"></div></div></div></div>
+<div class="subnav" id="subnav" hidden><div id="sn-row"></div><div class="filters" id="g-filters" hidden><div class="fbox"><div class="fg"><span class="fl" id="m-fl">Формат</span><div class="chips" id="m-f" role="group" aria-labelledby="m-fl"></div></div><div class="fg"><span class="fl" id="m-yl">Год</span><div class="chips" id="m-y" role="group" aria-labelledby="m-yl"></div></div><div class="fact"><button type="button" class="fgo" id="g-apply">Применить</button><button type="button" class="frs" id="g-reset">Сбросить</button></div></div></div></div>
 
 <section id="v-today" hidden>
  <div class="card dark">
@@ -744,7 +751,7 @@ function today() {
 }
 
 /* ---------- evenings ---------- */
-let mF = 'all', mY = 'all', mLimit = 24, mEs = [], gfOpen = false;
+let mF = 'all', mY = 'all', pF = 'all', pY = 'all', mLimit = 24, mEs = [], gfOpen = false;   // m* = applied filters, p* = the choice being made in the open panel
 const isOtherEv = e => !['regular','summer','ecl-league','ecl-playin','ecl-r16','sunday'].includes(e.kind) || e.teams.length !== 3;
 /* the format / year filter of the games tab: the list of results, the chart above it and the balance page all go through it */
 const passF = e => {
@@ -757,7 +764,17 @@ const passF = e => {
 };
 const FICON = '<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5.5h14M6 10h8M8.5 14.5h3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
 const fOn = () => mF !== 'all' || mY !== 'all';
-function closeFilters() { if (!gfOpen) return; gfOpen = false; $('#g-filters').hidden = true; $('#g-fbtn')?.setAttribute('aria-expanded', 'false'); }
+function drawFilters() {
+  const F = [['all','Все'],['ecl','ЛЧ FFF'],['summer','Летняя лига'],['regular','Обычные'],['other','8×8 и другие']], Y = [['all','Все годы'],['2026','2026'],['2025','2025']];
+  $('#m-f').innerHTML = F.map(f => `<button type="button" data-f="${f[0]}" aria-pressed="${f[0] === pF}">${f[1]}</button>`).join('');
+  $('#m-y').innerHTML = Y.map(f => `<button type="button" data-y="${f[0]}" aria-pressed="${f[0] === pY}">${f[1]}</button>`).join('');
+}
+function openFilters() { if (gfOpen) return; gfOpen = true; pF = mF; pY = mY; drawFilters(); $('#g-filters').hidden = false; $('#g-fbtn')?.setAttribute('aria-expanded', 'true');
+  if ($('#g-filters').getBoundingClientRect().bottom > innerHeight - 8) scrollTo({top: contentTop(), behavior: 'smooth'}); }      // bring the whole panel with its buttons into view
+function setFilters(f, y) {      // «Применить» / «Сбросить»: the only two ways to close the panel
+  mF = pF = f; mY = pY = y; mLimit = 24; bLimit = 40; gfOpen = false; $('#g-filters').hidden = true; $('#g-fbtn')?.setAttribute('aria-expanded', 'false');
+  matches(); balance(); if (scrollY > contentTop()) scrollTo(0, contentTop());
+}
 const nl = t => esc(t).replace(/\n/g, '<br>');                              // texts keep their line breaks (no semicolons on the page)
 const ptsH = n => `${n}<span class="hm"> ${plural(n, 'очко', 'очка', 'очков')}</span>`;   // on phones just the number
 const recapHTML = t => esc(t).replace(/@([A-Za-z][A-Za-z0-9_]{3,})/g, '<a href="https://t.me/$1" target="_blank" rel="noopener">@$1</a>');
@@ -770,10 +787,6 @@ const pfRows = e => { const P = D.pf[evKey(e)]; if (!P) return ''; const by = Ob
     ts.map(t => { const r = by[t.color]; return `<div class="cmp"><span class="team">${badge(t.color)}<span>${esc(t.name)}</span></span><span class="x">${ptsH(r[1])} · ${Math.round(r[2] * 100)}%</span><span class="f">${ptsH(t.res[5])} · ${t.place}-е</span></div>`; }).join('') +
     `<p class="ex">Ждали — очки по прогнозу и шанс на первое место.<br>Вышло — очки и место.<br>Прогноз посчитан только по играм до этого дня.</p>`; };
 function matches() {
-  const F = [['all','Все'],['ecl','ЛЧ FFF'],['summer','Летняя лига'],['regular','Обычные'],['other','8×8 и другие']];
-  $('#m-f').innerHTML = F.map(f => `<button data-f="${f[0]}" aria-pressed="${f[0] === mF}">${f[1]}</button>`).join('');
-  const Y = [['all','Все годы'],['2026','2026'],['2025','2025']];
-  $('#m-y').innerHTML = Y.map(f => `<button data-y="${f[0]}" aria-pressed="${f[0] === mY}">${f[1]}</button>`).join('');
   const q = $('#m-q').value.trim().toLowerCase().replace(/^@/, '');
   const hit = p => q && (p.toLowerCase().includes(q) || nm(p).toLowerCase().includes(q));
   let es = D.evenings.slice().reverse().filter(passF);
@@ -1301,8 +1314,10 @@ function boot(d) {
   for (const id of ['#ta-b', '#ta-sq', '#ta-gk']) $(id).addEventListener('click', topClick(allS, allTop));
   $('#s-cur').addEventListener('click', () => { tView = 'current'; today(); });
   $('#s-opt').addEventListener('click', () => { tView = 'optimal'; today(); });
-  $('#m-f').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { mF = b.dataset.f; mLimit = 24; bLimit = 40; matches(); balance(); } });
-  $('#m-y').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { mY = b.dataset.y; mLimit = 24; bLimit = 40; matches(); balance(); } });
+  $('#m-f').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { pF = b.dataset.f; drawFilters(); } });
+  $('#m-y').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { pY = b.dataset.y; drawFilters(); } });
+  $('#g-apply').addEventListener('click', () => setFilters(pF, pY));
+  $('#g-reset').addEventListener('click', () => setFilters('all', 'all'));
   const C = d.counts;
   $('#m-q').addEventListener('input', () => { mLimit = 24; matches(); });
   $('#m-more').addEventListener('click', () => { mLimit = Infinity; matches(); });
@@ -1342,13 +1357,11 @@ function boot(d) {
   document.addEventListener('click', e => { const w = e.target.closest('.sw[data-gc] [data-v]'); if (w) { const id = w.parentElement.dataset.gc; gcS[id] = w.dataset.v; drawGC(id); } });
   /* sub-tabs of a long page scroll to their block; the bar itself stays visible like a table header */
   $('#subnav').addEventListener('click', e => {
-    const fb = e.target.closest('#g-fbtn'); if (fb) { gfOpen = !gfOpen; fb.setAttribute('aria-expanded', gfOpen); $('#g-filters').hidden = !gfOpen; return; }
+    if (e.target.closest('#g-fbtn')) { openFilters(); return; }      // opens only; the panel is closed by «Применить» or «Сбросить»
     if (e.target.closest('#g-filters')) return;
     const a = e.target.closest('a[data-sec]'); if (!a) return; e.preventDefault(); const h = a.dataset.sec;
     if (h !== 'pstat' && SEC[h] && $('#' + SEC[h]).hidden && $('#p-q').value) { $('#p-q').value = ''; players(); }      // the blocks above the table are hidden while a search is on
     if (location.hash !== '#' + h) history.replaceState(null, '', '#' + h); goSec(h, true); });
-  document.addEventListener('click', e => { if (gfOpen && !e.target.closest('#subnav')) closeFilters(); });      // a tap outside closes the filters
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFilters(); });
   addEventListener('scroll', () => { if (!spyRaf) spyRaf = requestAnimationFrame(() => { spyRaf = 0; spy(); }); }, {passive: true});
   let rz = 0; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { setStk(); fitScroll(); }, 120); });
   addEventListener('hashchange', route); route();
