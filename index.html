@@ -268,7 +268,7 @@ input:focus-visible,button:focus-visible,a:focus-visible,[tabindex]:focus-visibl
 dialog .dh .s2{color:var(--csub);font-size:13px;margin-top:4px}
 /* monthly tops */
 .mnav{display:flex;align-items:center;gap:12px}
-.mnav h2{min-width:0}
+.mnav h2{min-width:0;margin:0}
 .arr{width:44px;height:44px;border-radius:50%;border:0;background:var(--card2);color:var(--ink);font:600 22px Onest,sans-serif;cursor:pointer;flex:none;display:grid;place-items:center}
 .arr:disabled{opacity:.35;cursor:default}
 .boards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:14px;margin-top:10px}
@@ -515,7 +515,19 @@ tr.go:hover td{background:var(--card2)}
  .sched{display:block;background:var(--char2);border-radius:18px;padding:4px 14px;margin-top:14px}.sched div{display:grid;grid-template-columns:9em minmax(0,1fr);gap:10px;align-items:baseline;background:none;border-radius:0;padding:9px 0;font-size:13px}.sched div+div{border-top:1px solid #ffffff14}.sched b{font-size:14px;margin:0}.sched div:first-child span{display:inline}.brand{gap:12px}.tg{min-height:44px}
  .dots .r,.dots .ax{grid-template-columns:5.6em minmax(0,1fr) 2em}.who{gap:8px}.pbtn{width:36px;height:36px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
-#tm-t{display:inline-grid;text-align:center}#tm-t>span{grid-area:1/1}#tm-t>.gh{visibility:hidden}
+#tm-t{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;text-align:center;font:inherit;text-transform:inherit;letter-spacing:inherit;color:inherit;background:none;border:0;padding:4px 8px;margin:0;border-radius:12px;cursor:pointer}
+#tm-t:hover,#tm-t[aria-expanded=true]{background:var(--card2)}#tm-t .mtw{display:inline-grid}#tm-t .mtw>span{grid-area:1/1}#tm-t .gh{visibility:hidden}#tm-t svg{flex:none;opacity:.55;transition:transform .2s}#tm-t[aria-expanded=true] svg{transform:rotate(180deg)}
+/* month picker under the title: years on top, 12 months 3 x 4 below, months without games are greyed out */
+.mcard{position:relative}
+.mpick{--card:light-dark(#e3e3e3,#333);--card2:light-dark(#fff,#474747);--line:light-dark(#c6c6c6,#555);--sub:light-dark(#4f4f4f,#bdbdbd);position:absolute;z-index:6;left:50%;top:76px;transform:translateX(-50%);width:min(340px,calc(100% - 16px));background:var(--card);border:1px solid var(--line);border-radius:20px;padding:12px;box-shadow:0 18px 44px #00000059,0 2px 6px #0000002e}
+.mpick[hidden]{display:none}
+.mpick .vt{display:flex;width:100%;background:var(--card2)}.mpick .vt button[aria-pressed=false]{color:var(--sub)}.mpick .vt button{flex:1}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.mgrid button{min-height:42px;border:0;border-radius:12px;background:var(--card2);color:var(--ink);font:600 14px Onest,system-ui,sans-serif;cursor:pointer}
+.mgrid button:hover:not(:disabled){background:var(--line)}
+.mgrid button[aria-current=true]{background:var(--act);color:var(--actInk)}
+@media(max-width:420px){#tm-t{font-size:min(1em,5.6vw);padding:4px 4px;gap:3px}}
+.mgrid button:disabled{background:none;color:var(--sub);opacity:.45;cursor:default}
 </style>
 </head>
 <body>
@@ -583,7 +595,7 @@ tr.go:hover td{background:var(--card2)}
 </section>
 
 <section id="v-digest" hidden>
- <div class="card"><div class="mnav"><button class="arr" type="button" id="tm-prev" aria-label="Предыдущий месяц">‹</button><h2 id="tm-t"></h2><button class="arr" type="button" id="tm-next" aria-label="Следующий месяц">›</button></div>
+ <div class="card mcard"><div class="mnav"><button class="arr" type="button" id="tm-prev" aria-label="Предыдущий месяц">‹</button><h2><button type="button" id="tm-t" aria-haspopup="true" aria-expanded="false" aria-controls="tm-pick" title="Выбрать месяц"></button></h2><button class="arr" type="button" id="tm-next" aria-label="Следующий месяц">›</button></div><div class="mpick" id="tm-pick" hidden><div class="vt" id="tm-py" role="group" aria-label="Год"></div><div class="mgrid" id="tm-pm"></div></div>
   <p class="sub" id="tm-s" style="margin:10px 0 0;max-width:none"></p></div>
  <div id="s-top">
   <div class="card sq" id="tm-sq"></div>
@@ -1065,11 +1077,19 @@ function drawTop(T, S, sqEl, bEl, W, gkEl) {
     <p class="rule" style="margin:10px 2px 0;font-size:13px;color:var(--sub)">Средние по сборной. На плашке — ${K === 'pts' ? 'очки' : K === 'gf' ? 'забитые' : 'пропущенные'} команды игрока за матч${K === 'ga' ? ', чем меньше, тем лучше' : ''}.</p></div></div>`;
   sqEl.hidden = all.length < 5;
 }
+let pickY = null;
+function drawPick() {
+  const ms = Object.keys(D.tops), ys = [...new Set(ms.map(m => m.slice(0, 4)))].sort();
+  if (!ys.includes(pickY)) pickY = topM.slice(0, 4);
+  $('#tm-py').innerHTML = ys.map(y => `<button type="button" data-y="${y}" aria-pressed="${y === pickY}">${y}</button>`).join('');
+  $('#tm-pm').innerHTML = MONN.map((m, i) => { const k = `${pickY}-${String(i + 1).padStart(2, '0')}`; return `<button type="button" data-m="${k}"${D.tops[k] ? '' : ' disabled'}${k === topM ? ' aria-current="true"' : ''}>${m}</button>`; }).join('');
+}
+function pickOpen(on) { $('#tm-pick').hidden = !on; $('#tm-t').setAttribute('aria-expanded', on); if (on) { pickY = topM.slice(0, 4); drawPick(); } }
 function topView() {
   const ms = Object.keys(D.tops).sort(); if (!topM || !D.tops[topM]) topM = ms[ms.length - 1];
   const i = ms.indexOf(topM), T = D.tops[topM];
   // the title keeps the width of the longest month name, so the arrows never move while flipping months
-  $('#tm-t').innerHTML = `<span>${MONN[+topM.slice(5) - 1]} ${topM.slice(0, 4)}</span>` + MONN.map(m => `<span class="gh" aria-hidden="true">${m} 0000</span>`).join('');
+  $('#tm-t').innerHTML = `<span class="mtw"><span>${MONN[+topM.slice(5) - 1]} ${topM.slice(0, 4)}</span>` + MONN.map(m => `<span class="gh" aria-hidden="true">${m} 0000</span>`).join('') + `</span><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   $('#tm-prev').disabled = i <= 0; $('#tm-next').disabled = i >= ms.length - 1;
   $('#tm-s').textContent = `${T.days} ${plural(T.days, 'игровой день', 'игровых дня', 'игровых дней')} · считаются результаты команд игрока, в среднем за матч`;
   drawTop(T, topS, $('#tm-sq'), $('#tm-b'), TOPW.month);
@@ -1315,6 +1335,11 @@ function boot(d) {
   today(); topView(); allTop(); matches(); for (const id of ['lg', 'po']) drawGC(id); league(); playoff(); drawBracket = bracket(); players(); pairTable('good'); balance(); check();
   $('#tm-prev').addEventListener('click', () => { const ms = Object.keys(D.tops).sort(); topM = ms[Math.max(0, ms.indexOf(topM) - 1)]; topView(); });
   $('#tm-next').addEventListener('click', () => { const ms = Object.keys(D.tops).sort(); topM = ms[Math.min(ms.length - 1, ms.indexOf(topM) + 1)]; topView(); });
+  $('#tm-t').addEventListener('click', () => pickOpen($('#tm-pick').hidden));
+  $('#tm-pick').addEventListener('click', e => { const y = e.target.closest('[data-y]'); if (y) { pickY = y.dataset.y; drawPick(); return; }
+    const m = e.target.closest('[data-m]'); if (m && !m.disabled) { topM = m.dataset.m; pickOpen(false); topView(); } });
+  document.addEventListener('click', e => { if (!$('#tm-pick').hidden && e.target.isConnected && !e.target.closest('#tm-pick,#tm-t')) pickOpen(false); });      // a tap outside closes the picker
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#tm-pick').hidden) pickOpen(false); });
   const topClick = (S, draw) => e => { const w = e.target.closest('.sw [data-v]'); if (w) { const k = w.parentElement.dataset.sw; S[k] = w.dataset.v; (S.x || (S.x = {}))[k] = false; draw(); return; }
     const m = e.target.closest('[data-more]'); if (m) { const X = S.x || (S.x = {}); X[m.dataset.more] = !X[m.dataset.more]; draw(); return; }
     const b = e.target.closest('[data-n]'); if (b) profile(b.dataset.n); };
