@@ -1199,7 +1199,7 @@ function drawTop(T, S, sqEl, bEl, W, gkEl) {
   sqEl.innerHTML = all.length < 5 ? '' : `<div class="ch"><h3>${W.sq}</h3>${sw('sq', [['pts', 'Очки'], ['gf', 'Забитые'], ['ga', 'Пропущенные'], ['ix', 'Индекс']])}</div>
     <div class="sqg"><div class="pitch"><div class="ln"></div><div class="cc"></div><div class="bx"></div>${rows.map(r => `<div class="prow">${r.map(x => chip(x)).join('')}</div>`).join('')}${gk ? `<div class="prow">${chip(gk, true)}</div>` : ''}</div>
     <div><div class="sqs"><div class="kpi"><strong>${dec(avg('pts'), 2)}</strong><span>очка за матч</span></div><div class="kpi"><strong>${dec(avg('gf'), 2)}</strong><span>забито за матч</span></div><div class="kpi"><strong>${dec(avg('ga'), 2)}</strong><span>пропущено за матч</span></div></div>
-    <p class="rule" style="margin:10px 2px 0;font-size:13px;color:var(--sub)">Средние по сборной. На плашке — ${K === 'ix' ? W.ixNote : `${K === 'pts' ? 'очки' : K === 'gf' ? 'забитые' : 'пропущенные'} команды игрока за матч${K === 'ga' ? ', чем меньше, тем лучше' : ''}`}.</p></div></div>`;
+    <p class="rule" style="margin:10px 2px 0;font-size:13px;color:var(--sub)">Средние по сборной. На плашке — ${K === 'ix' ? W.ixNote : `${K === 'pts' ? 'очки' : K === 'gf' ? 'забитые' : 'пропущенные'} команды игрока за матч${K === 'ga' ? ', чем меньше, тем лучше' : ''}`}. В сборной игроки от ${games(mn.p)}${W.per}, вратари от ${days(mn.gk)} в воротах.</p></div></div>`;
   sqEl.hidden = all.length < 5;
 }
 let pickY = null;
@@ -1356,7 +1356,7 @@ function pairTable(id) {
   const cell = (p, k) => k === 'm' ? p.m : k === 'firsts' ? p.firsts : dec(p[k], 2);
   $('#b-' + id).innerHTML = `<thead><tr>${cols.map(c => `<th class="s${c[3] ? ' r' : ''}${c[4] ? ' ' + c[4] : ''}" data-k="${c[0]}" tabindex="0"${c[0] === st.k ? ` aria-sort="${st.d < 0 ? 'descending' : 'ascending'}"` : ''}>${c[2] ? `<span class="cwd">${c[1]}</span><span class="cnr">${c[2]}</span>` : c[1]}${c[0] === st.k ? (st.d < 0 ? ' ↓' : ' ↑') : ''}</th>`).join('')}</tr></thead><tbody>${rows.slice(0, st.lim).map(p => `<tr><td class="pn">${p.ids.map(x => `<span>${who(x)}</span>`).join('')}</td>${cols.slice(1).map(c => `<td class="r${c[4] ? ' ' + c[4] : ''}">${cell(p, c[0])}</td>`).join('')}</tr>`).join('')}</tbody>`;
   const m = $(`#b-${id}-more`); m.hidden = rows.length <= st.lim; m.textContent = `Показать ещё · всего ${rows.length}`;
-  $(`#b-${id}-c`).textContent = `${tri ? 'Тройки от 4 игровых дней' : 'Пары от 8 игровых дней'} в одной команде. Очки и мячи — команды, в среднем за матч.`;
+  $(`#b-${id}-c`).textContent = `${tri ? 'Тройки от 5 игровых дней' : 'Пары от 10 игровых дней'} в одной команде. Очки и мячи — команды, в среднем за матч.`;
   for (const b of document.querySelectorAll(`#b-${id}-m button`)) b.setAttribute('aria-pressed', b.dataset.m === st.m);
   fitScroll();
 }
