@@ -793,7 +793,22 @@ function today() {
   if (!LV) return;
   // ---- the game is on: the organiser's table so far + chances for the final places from the matches left
   const C2 = T.current.teams, col = t => (t.bib || t.color) === 'white' ? '#c2c2c2' : BIB[t.bib || t.color];
-  const lead = LV.final.map((f, i) => [f.p[0], i]).sort((a, b) => b[0] - a[0])[0];
+  const lead = LV.final.map((f, i) => [f.p[0], i]).sort((a, b) => b[0] - a[0])[0], END = LV.played >= LV.matches.length;
+  if (END) {
+    const ord = C2.map((t, i) => i).sort((a, b) => LV.now[b].Pts - LV.now[a].Pts || (LV.now[b].GF - LV.now[b].GA) - (LV.now[a].GF - LV.now[a].GA) || LV.now[b].GF - LV.now[a].GF);
+    $('#t-th').textContent = 'Итоговая таблица'; $('#t-mh').textContent = 'Матчи';
+    $('#t-sum').textContent = `Игра завершена. Первое место у ${C2[ord[0]].name}: ${LV.now[ord[0]].Pts} ${plural(LV.now[ord[0]].Pts, 'очко', 'очка', 'очков')}.`;
+    document.querySelectorAll('#t-lineups .tpt').forEach((el, i) => { const pl = ord.indexOf(i) + 1;
+      el.querySelector('.pl').textContent = LV.now[i].Pts; el.querySelectorAll('small')[0].textContent = `${pl}-е место · мячи ${LV.now[i].GF}:${LV.now[i].GA}`;
+      el.querySelectorAll('small')[1].textContent = 'очков'; el.querySelector('.p1b i').style.width = pl === 1 ? '100%' : '0%'; });
+    $('#t-table').innerHTML = `<thead><tr><th class="r">#</th><th>Команда</th><th class="r">В-Н-П</th><th class="r">Мячи</th><th class="r hm">±</th><th class="r">Очки</th></tr></thead><tbody>${ord.map((i, k) => { const t = C2[i], n = LV.now[i];
+      return `<tr><td class="r sub">${k + 1}</td><td><span class="team">${badge(t.bib || t.color)}${esc(t.name)}</span></td><td class="r">${n.W}-${n.D}-${n.L}</td><td class="r">${n.GF}:${n.GA}</td><td class="r hm">${n.GF === n.GA ? '0' : sgn(n.GF - n.GA, 0)}</td><td class="r"><b>${n.Pts}</b></td></tr>`; }).join('')}</tbody>`;
+    const xp = T.current.pred.table.map((s, i) => [s.p1, i]).sort((a, b) => b[0] - a[0])[0];
+    $('#t-note').textContent = `До игры прогноз чуть выше ставил ${C2[xp[1]].name} (${Math.round(xp[0] * 100)}% на первое место).`;
+    $('#t-matches').innerHTML = LV.matches.map(m => { const A = C2[m.a], B = C2[m.b];
+      return `<div class="m done"><span class="cap num">${m.n}</span><span class="a">${esc(A.name)}${badge(A.bib || A.color)}</span><span class="sc num">${m.sa} : ${m.sb}</span><span class="b">${badge(B.bib || B.color)}${esc(B.name)}</span></div>`; }).join('');
+    return;
+  }
   $('#t-sum').textContent = `Идёт игра: сыграно ${LV.played} из 12 матчей. ${C2[lead[1]].name} первым будет с вероятностью ${Math.round(lead[0] * 100)}%.`;
   document.querySelectorAll('#t-lineups .tpt').forEach((el, i) => {
     el.querySelector('.pl').textContent = LV.now[i].Pts; el.querySelectorAll('small')[0].textContent = `1-е место ${LV.final[i].p[0] > 0 && LV.final[i].p[0] < 0.005 ? '<1' : Math.round(LV.final[i].p[0] * 100)}% · к концу ≈ ${dec(LV.final[i].xPts, 0)} оч.`;
@@ -1378,6 +1393,7 @@ function boot(d) {
   { const c = {}; for (const v of Object.values(N)) c[v] = (c[v] || 0) + 1; DUP = new Set(Object.keys(c).filter(k => c[k] > 1)); }
   d.players.forEach((p, i) => { PL[p.nick] = p; PIX[p.nick] = i; });
   $('#tab-today').hidden = !d.today;
+  if (d.today) { const n = new Date(), iso = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`; $('#tab-today').textContent = d.today.date === iso ? 'Сегодня' : d.today.date.slice(8, 10) + '.' + d.today.date.slice(5, 7); }
   for (const e of d.evenings) EV[evKey(e)] = e;
   today(); topView(); allTop(); matches(); for (const id of ['lg', 'po']) drawGC(id); league(); playoff(); drawBracket = bracket(); players(); pairTable('good'); balance(); check();
   $('#tm-prev').addEventListener('click', () => { const ms = Object.keys(D.tops).sort(); topM = ms[Math.max(0, ms.indexOf(topM) - 1)]; topView(); });
