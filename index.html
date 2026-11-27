@@ -52,10 +52,10 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 #tbar a[aria-current]{color:var(--mint);background:rgba(255,255,255,.1)}#tbar a:active{transform:scale(.96)}
 /* ---- header: brand row + tabs, sticks with a negative top so the brand row collapses into a thin strip;
    --p (0..1, set from the scroll) shrinks the logo and the title and fades in the dark glass under the header and the sub-tabs ---- */
-:root{--p:0;--L:60px;--rowpad:18px;--col:44px;--sL:.6;--sT:.54}
+:root{--p:0;--L:60px;--rowpad:18px;--col:40px;--sL:.6;--sT:.56}
 body{padding-top:env(safe-area-inset-top,0px)}
 .hd{position:sticky;top:calc(env(safe-area-inset-top,0px) - var(--col));z-index:30;color:var(--cink);
-  background:rgba(13,13,13,calc(var(--p)*.9));-webkit-backdrop-filter:blur(calc(var(--p)*18px)) saturate(calc(1 + var(--p)*.6));backdrop-filter:blur(calc(var(--p)*18px)) saturate(calc(1 + var(--p)*.6))}
+  background:rgba(13,13,13,calc(var(--p)*.94));-webkit-backdrop-filter:blur(calc(var(--p)*18px)) saturate(calc(1 + var(--p)*.6));backdrop-filter:blur(calc(var(--p)*18px)) saturate(calc(1 + var(--p)*.6))}
 .hrow{padding:var(--rowpad) max(4vw,16px)}
 .hrow .wrap{position:relative;display:flex;align-items:center;gap:12px;overflow:visible}
 .hd .brand{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:14px;flex-wrap:nowrap}
@@ -63,10 +63,11 @@ body{padding-top:env(safe-area-inset-top,0px)}
   transform:translateY(calc(var(--p)*var(--col)/2)) scale(calc(1 - (1 - var(--sL))*var(--p)))}
 .hd h1{flex:0 1 auto;min-width:0;white-space:nowrap;transform-origin:left center;
   transform:translate(calc(-1*var(--p)*var(--L)*(1 - var(--sL))),calc(var(--p)*var(--col)/2)) scale(calc(1 - (1 - var(--sT))*var(--p)))}
-.schb{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px 0 12px;border:0;border-radius:999px;cursor:pointer;
+.schb{position:relative;flex:none;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px 0 10px;border:0;border-radius:999px;cursor:pointer;
   background:var(--char2);color:var(--cink);font:600 15px Onest,system-ui,sans-serif;transform:translateY(calc(var(--p)*var(--col)/2));transition:background .15s}
 .schb:hover,.schb[aria-expanded=true]{background:#3a3a3a}
-.schb .ico{width:22px;height:22px}
+.schb .ico{width:20px;height:20px}
+.schb::after,.fbtn::after{content:"";position:absolute;inset:-4px}
 .ico{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.ico .f{fill:currentColor;stroke:none}
 .schp{position:absolute;right:0;top:calc(100% + 10px + var(--p)*var(--col)/2);z-index:40;width:min(460px,calc(100vw - 32px));background:#1d1d1d;border:1px solid #ffffff1a;border-radius:22px;
   padding:16px 18px 10px;box-shadow:0 18px 48px #000000a6;color:var(--cink)}
@@ -76,11 +77,10 @@ body{padding-top:env(safe-area-inset-top,0px)}
 .schp .sched div+div{border-top:1px solid #ffffff14}
 .schp .sched b{font-size:15px;margin:0;white-space:nowrap}
 .schp .sched div:first-child{grid-column:auto}
-.subnav{background:rgba(13,13,13,calc(var(--p)*.9));-webkit-backdrop-filter:blur(calc(var(--p)*18px));backdrop-filter:blur(calc(var(--p)*18px));box-shadow:0 1px 0 rgba(255,255,255,calc(var(--p)*.07))}
+main .subnav{background:rgba(13,13,13,calc(var(--p)*.94));-webkit-backdrop-filter:blur(calc(var(--p)*18px));backdrop-filter:blur(calc(var(--p)*18px));box-shadow:0 1px 0 rgba(255,255,255,calc(var(--p)*.07))}
 body>main{padding-top:0}
-.pwa .hd{box-shadow:0 1px 0 rgba(255,255,255,calc(var(--p)*.07))}
-@media(max-width:600px){:root{--L:44px;--rowpad:14px;--col:22px;--sL:.76;--sT:.84}.hd h1{font-size:min(20px,4.6vw)}.hd .brand{gap:11px}
-  .schb{width:44px;padding:0;justify-content:center}.schb span{display:none}.schb .ico{width:23px;height:23px}}
+@media(max-width:600px){:root{--L:44px;--rowpad:14px;--col:18px;--sL:.76;--sT:.86}.hd h1{font-size:min(20px,4.6vw)}.hd .brand{gap:11px}
+  .schb{width:36px;padding:0;justify-content:center}.schb span{display:none}.schb .ico{width:20px;height:20px}}
 
 #sat{position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:60;pointer-events:none}
 body{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
@@ -258,8 +258,9 @@ input:focus-visible,button:focus-visible,a:focus-visible,[tabindex]:focus-visibl
 .fact .fgo:hover{background:#8fe6be}
 .fact .frs{background:none;color:var(--sub);box-shadow:inset 0 0 0 1.5px var(--line)}
 .fact .frs:hover{color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--sub)}
-.fbtn{display:inline-grid;place-items:center;width:42px;height:42px;border:0;border-radius:50%;background:#fff;color:#111;cursor:pointer;flex:none;box-shadow:0 1px 0 var(--line)}
-.fbtn.on{background:var(--coral);color:#111}
+.fbtn{position:relative;display:inline-grid;place-items:center;width:36px;height:36px;border:0;border-radius:50%;background:var(--char2);color:var(--cink);cursor:pointer;flex:none;transition:background .15s}
+.fbtn:hover{background:#3a3a3a}.fbtn svg{width:18px;height:18px}
+.fbtn.on{background:var(--coral);color:#111}.fbtn.on:hover{background:var(--coral)}
 .fbtn[aria-expanded=true]{outline:2px solid var(--ink);outline-offset:2px}
 .lb .more{margin-top:10px}
 .fbox .fl{display:block;font:600 11px Onest,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin:0 0 8px 4px}
@@ -268,7 +269,7 @@ input:focus-visible,button:focus-visible,a:focus-visible,[tabindex]:focus-visibl
 /* second level navigation: underlined text tabs, clearly different from the pill tabs above */
 .subnav{position:sticky;top:var(--tabsH,68px);z-index:19;margin:0 calc(-1*max(4vw,16px)) 14px;padding:0 max(4vw,16px);background:var(--bg)}
 .subnav .wrap{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;padding-bottom:6px}
-.subnav .wrap.nw{flex-wrap:nowrap}.subnav .wrap.nw .st{min-width:0}
+.subnav .wrap.nw{flex-wrap:nowrap;border-bottom:1px solid var(--line);padding-bottom:0}.subnav .wrap.nw .st{border-bottom:0}.subnav .wrap.nw .st a{margin-bottom:0}.subnav .wrap.nw .fbtn{width:34px;height:34px}.subnav .wrap.nw .st{min-width:0}
 @media(max-width:420px){.subnav .wrap.nw .st{gap:14px}}
 .sech{margin:30px 4px 12px}
 .subnav .st{display:flex;gap:22px;border-bottom:1px solid var(--line);flex:1 1 auto;overflow-x:auto;scrollbar-width:none}
