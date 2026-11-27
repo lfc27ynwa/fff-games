@@ -523,7 +523,10 @@ dialog button.x{background:#ffffff1f;color:#fff;border:0;border-radius:50%;width
 .kpi strong{display:block;font:700 24px Oswald,"Arial Narrow",sans-serif}
 .kpi.eq strong{white-space:nowrap;font-size:clamp(15px,4.7vw,21px);line-height:36px}
 .kpi span{display:block;font-size:12px;line-height:1.35;color:var(--sub);margin-top:2px}
-tr.go{cursor:pointer}td.dt{white-space:nowrap}.ph{display:none}
+tr.go{cursor:pointer}td.dt{white-space:nowrap}
+.kf{white-space:nowrap}.kf b{display:block;font-variant-numeric:tabular-nums}.kf i{display:block;font-style:normal;font-size:12px;font-weight:600;color:var(--sub);font-variant-numeric:tabular-nums}.kf i.p{color:light-dark(#1d7a46,#5fd08f)}.kf i.m{color:light-dark(#b3261e,#ff8a7a)}
+dialog table.pg thead th{position:static}
+table.pg td:nth-child(2){width:99%}@media(max-width:600px){table.pg th,table.pg td{padding-left:4px;padding-right:4px}table.pg th:first-child,table.pg td:first-child{padding-left:0}table.pg th:last-child,table.pg td:last-child{padding-right:0}dialog .db table.pg td.dt{font-size:12px}dialog .db table.pg th{letter-spacing:0;font-size:11px}}table.pg .team{overflow-wrap:normal;word-break:normal}.ph{display:none}
 @media(max-width:600px){td.dt{font-size:13px;color:var(--sub)}.ph{display:inline}}
 @media(max-width:380px){.wdx{display:none}}
 tr.go:hover td{background:var(--card2)}
@@ -685,6 +688,7 @@ const WD = ['вс','пн','вт','ср','чт','пт','сб'];
 const dt = iso => new Date(iso + 'T12:00:00');
 const fd = iso => `${dt(iso).getDate()} ${MON[dt(iso).getMonth()]}`;
 const fds = iso => `${dt(iso).getDate()} ${MONS[dt(iso).getMonth()]}`;
+const fdd = iso => `${iso.slice(8, 10)}.${iso.slice(5, 7)}.${iso.slice(2, 4)}`;
 const wdl = iso => WDL[dt(iso).getDay()];
 const wd = iso => WD[dt(iso).getDay()];
 const cap1 = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1082,12 +1086,18 @@ function profile(n) {
   const games = [];
   for (const e of D.evenings) { const t = e.teams.find(t => t.players.includes(n)); if (t) games.push({e, t}); }
   games.reverse();
-  const row = ({e, t}) => `<tr class="go" data-k="${esc(evKey(e))}" tabindex="0"><td class="dt"><span class="wdx">${wd(e.date)}, </span>${fds(e.date)}${e.date < '2026-01-01' ? ' 25' : ''}</td><td><span class="team">${badge(t.color)}${esc(t.name)}</span></td><td class="r hm">${t.res[0]}-${t.res[1]}-${t.res[2]}</td><td class="r">${t.place}-е · <b>${t.res[5]}<span class="hm"> ${plural(t.res[5], 'очко', 'очка', 'очков')}</span><span class="ph"> оч.</span></b></td></tr>`;
+  // index after every game day and its change since the player's previous game day
+  const RT = new Map(); let pv = 0; for (const [k, v] of p.rt || []) { RT.set(k, [v, v - pv]); pv = v; }
+  const kf = (v, d) => `<td class="r kf"><b>${sgn(v, 2)}</b><i class="${d >= 0.005 ? 'p' : d <= -0.005 ? 'm' : ''}">${Math.abs(d) < 0.005 ? '0,00' : sgn(d, 2)}</i></td>`;
+  const kfc = k => !p.rt ? '' : RT.has(k) ? kf(...RT.get(k)) : '<td class="r kf sub">—</td>';
+  const now = p.rt && p.rt.length && p.rating != null && Math.abs(p.rating - pv) >= 0.005
+    ? `<tr><td class="dt">сейчас</td><td class="sub" style="font-size:13px">после игр других ребят</td><td class="hm"></td><td></td>${kf(p.rating, p.rating - pv)}</tr>` : '';
+  const row = ({e, t}) => `<tr class="go" data-k="${esc(evKey(e))}" tabindex="0"><td class="dt">${fdd(e.date)}</td><td><span class="team">${badge(t.color)}${esc(t.name).replace(/[^\s]{11,}/g, w => w.slice(0, Math.ceil(w.length / 2)) + '\u00ad' + w.slice(Math.ceil(w.length / 2)))}</span></td><td class="r hm">${t.res[0]}-${t.res[1]}-${t.res[2]}</td><td class="r pl">${t.place}-е<span class="cwd"> · </span><br class="cnr"><b>${t.res[5]}<span class="hm"> ${plural(t.res[5], 'очко', 'очка', 'очков')}</span><span class="ph"> оч.</span></b></td>${kfc(evKey(e))}</tr>`;
   $('#dlg-b').innerHTML = `<div class="kpis"><div class="kpi eq"><strong>${p.days} = ${money(p.lari)}</strong><span>${plural(p.days, 'игровой день', 'игровых дня', 'игровых дней')} = занёс</span></div><div class="kpi"><strong>${p.firsts}</strong><span>раз 1-е место</span></div><div class="kpi"><strong>${dec(p.ppg, 2)}</strong><span>очков за матч</span></div><div class="kpi"><strong>${p.rating != null ? sgn(p.rating, 2) : '—'}</strong><span>индекс${idxQ}</span></div></div>
     ${p.note ? `<div class="recap" style="margin:10px 0 0"><div class="rl">Из итогов Серёги</div><div class="rt">${nl(p.note)}</div></div>` : ''}
     ${analytics(p) || (monthly(p) ? '<h3>Аналитика</h3>' : '')}<div id="mon-box">${monthly(p)}</div>
     <div id="pr-box">${partnerTable()}</div><div id="gk-box">${keeperBlock()}</div>
-    <h3>Все игры · ${games.length}</h3><table><tbody>${games.map(row).join('')}</tbody></table>`;
+    <h3>Все игры · ${games.length}</h3><table class="pg${p.rt ? ' ix' : ''}">${p.rt ? '<thead><tr><th>Дата</th><th>Команда</th><th class="r hm">В-Н-П</th><th class="r">Место</th><th class="r">Индекс</th></tr></thead>' : ''}<tbody>${now}${games.map(row).join('')}</tbody></table>`;
   openDlg();
 }
 
