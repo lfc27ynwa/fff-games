@@ -1154,20 +1154,25 @@ let topM = null;
 const topS = {sq: 'pts', pts: 'p', gf: 'p', gm: 'p', gk: 'ga'}, allS = {sq: 'pts', pts: 'p', gf: 'p', gm: 'p', gk: 'ga'};
 const TOPW = {month: {sq: 'Сборная месяца', per: ' в месяце', most: 'игровые дни за месяц', none: 'В этом месяце таких нет.'},
               all: {sq: 'Сборная за всё время', per: ' за всё время', most: 'игровые дни за всё время', none: 'Таких пока нет.'}};
+// index for the squad: in a month — how much the player gained in his game days of that month, for all time — his index now
+const ixGain = (p, m) => { rtOf(p, ''); const M = RTX[p]; if (!M) return null; let g = 0, n = 0; for (const [k, [, d]] of M) if (k.startsWith(m)) { g += d; n++; } return n ? g : null; };
+TOPW.month.ix = p => ixGain(p, topM); TOPW.all.ix = p => PL[p]?.rating ?? null;
+TOPW.month.ixNote = 'сколько индекса игрок прибавил за месяц'; TOPW.all.ixNote = 'индекс игрока';
 /* boards «чьи команды…», most games, keepers and the squad on the pitch for one set of results: T = D.tops[month] or D.top_all, S = its switches */
 function drawTop(T, S, sqEl, bEl, W, gkEl) {
   const mn = T.mins, X = S.x || (S.x = {});                    // X[board] = the whole list is open
   const more = (key, total, n) => total > n ? `<div class="more"><button class="btn plain" type="button" data-more="${key}">${X[key] ? 'Свернуть' : `Показать ещё · всего ${total}`}</button></div>` : '';
-  const row = r => ({ids: r[0].map(k => D.players[k].nick), g: r[1], m: r[2], pts: r[3] / r[2], gf: r[4] / r[2], ga: r[5] / r[2], GF: r[4], GA: r[5], cs: r[6] ?? null, csm: r[7] ?? 0});
+  const row = r => { const ids = r[0].map(k => D.players[k].nick); return {ids, g: r[1], m: r[2], pts: r[3] / r[2], gf: r[4] / r[2], ga: r[5] / r[2], GF: r[4], GA: r[5], cs: r[6] ?? null, csm: r[7] ?? 0, csp: r[7] ? r[6] / r[7] : null, ix: ids.length === 1 ? W.ix(ids[0]) : null}; };
   const by = {pts: (a, b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.g - a.g, gf: (a, b) => b.gf - a.gf || b.pts - a.pts || b.g - a.g,
-              ga: (a, b) => a.ga - b.ga || b.pts - a.pts || b.g - a.g, cs: (a, b) => b.cs - a.cs || (b.cs / b.csm) - (a.cs / a.csm) || a.ga - b.ga};
+              ga: (a, b) => a.ga - b.ga || b.pts - a.pts || b.g - a.g, cs: (a, b) => b.cs - a.cs || (b.cs / b.csm) - (a.cs / a.csm) || a.ga - b.ga,
+              csp: (a, b) => b.csp - a.csp || b.cs - a.cs || a.ga - b.ga, ix: (a, b) => (b.ix ?? -99) - (a.ix ?? -99) || b.pts - a.pts};
   const games = n => `${n} ${plural(n, 'игровой день', 'игровых дня', 'игровых дней')}`, days = n => `${n} ${plural(n, 'день', 'дня', 'дней')}`;
-  const val = {pts: r => [dec(r.pts, 2), 'очка за матч'], gf: r => [dec(r.gf, 2), 'забито за матч'], ga: r => [dec(r.ga, 2), 'пропущено за матч'], cs: r => [r.cs, plural(r.cs, 'сухой матч', 'сухих матча', 'сухих матчей')]};
+  const val = {pts: r => [dec(r.pts, 2), 'очка за матч'], gf: r => [dec(r.gf, 2), 'забито за матч'], ga: r => [dec(r.ga, 2), 'пропущено за матч'], cs: r => [r.cs, plural(r.cs, 'сухой матч', 'сухих матча', 'сухих матчей')], csp: r => [Math.round(r.csp * 100) + '%', 'сухих матчей']};
   const sub = {p: r => `${games(r.g)} · мячи команды ${r.GF}:${r.GA}`, pair: r => `${games(r.g)} вместе · мячи ${r.GF}:${r.GA}`, tri: r => `${games(r.g)} вместе · мячи ${r.GF}:${r.GA}`,
                gk: r => `${days(r.g)} в воротах · пропущено ${r.GA} · сухих ${r.cs} из ${r.csm}`};
   const sw = (key, opts) => `<div class="sw" role="group" data-sw="${key}">${opts.map(o => `<button type="button" data-v="${o[0]}" aria-pressed="${S[key] === o[0]}">${o[1]}</button>`).join('')}</div>`;
   const none = `<p class="sub" style="margin:10px 0 0">${W.none}</p>`;
-  const list = (k, s_, n, key) => { let rs = T[k].map(row); if (s_ === 'cs') rs = rs.filter(r => r.csm); rs.sort(by[s_]); const tot = rs.length; if (!X[key]) rs = rs.slice(0, n);
+  const list = (k, s_, n, key) => { let rs = T[k].map(row); if (s_ === 'cs' || s_ === 'csp') rs = rs.filter(r => r.csm); rs.sort(by[s_]); const tot = rs.length; if (!X[key]) rs = rs.slice(0, n);
     return tot ? `<ol>${rs.map((r, j) => { const [v, u] = val[s_](r); return `<li><span class="md">${j + 1}</span><span class="nm">${r.ids.map(mate).join('<br>')}<span class="s">${sub[k](r)}</span></span><span class="v">${v}<span>${u}</span></span></li>`; }).join('')}</ol>${more(key, tot, n)}` : none; };
   const rule = {p: `от ${games(mn.p)}${W.per}`, pair: `от ${games(mn.pair)} вместе`, tri: `от ${games(mn.tri)} вместе`};
   const trio = key => `<div class="card lb">${sw(key, [['p', 'Игрок'], ['pair', 'Двойка'], ['tri', 'Тройка']])}<p class="rule">${rule[S[key]]}</p>${list(S[key], key, 3, key)}</div>`;
@@ -1176,7 +1181,7 @@ function drawTop(T, S, sqEl, bEl, W, gkEl) {
   const mostList = k => { const top = (T.most?.[k] || []).map(row), seen = new Set(top.map(r => r.ids.join('|')));   // top three of everyone, then the rest of those who pass the minimum
     const all = [...top, ...T[k].map(row).filter(r => !seen.has(r.ids.join('|'))).sort((a, b) => b.g - a.g || b.m - a.m || b.pts - a.pts)], rs = X.gm ? all : all.slice(0, 3);
     return rs.length ? `<ol>${rs.map((r, j) => `<li><span class="md">${j + 1}</span><span class="nm">${r.ids.map(mate).join('<br>')}<span class="s">${r.m} ${plural(r.m, 'матч', 'матча', 'матчей')} · ${dec(r.pts, 2)} очка за матч</span></span><span class="v">${r.g}<span>${plural(r.g, 'игровой день', 'игровых дня', 'игровых дней')}</span></span></li>`).join('')}</ol>${more('gm', all.length, 3)}` : none; };
-  const gkCard = hasGk ? `<div class="card lb">${sw('gk', [['ga', 'Пропущено'], ['cs', 'Сухие матчи']])}<p class="rule">стояли на воротах от ${days(mn.gk)}</p>${list('gk', S.gk, 4, 'gk')}</div>` : '';
+  const gkCard = hasGk ? `<div class="card lb">${sw('gk', [['ga', 'Пропущено'], ['cs', 'Сухие матчи'], ['csp', '% сухих']])}<p class="rule">стояли на воротах от ${days(mn.gk)}</p>${list('gk', S.gk, 4, 'gk')}</div>` : '';
   if (gkEl) { gkEl.innerHTML = gkCard; gkEl.parentElement.hidden = !gkCard; }
   bEl.innerHTML = `<div class="tops3">
     <div><h3 class="bgh">Чьи команды набирают больше очков</h3>${trio('pts')}</div>
@@ -1185,15 +1190,16 @@ function drawTop(T, S, sqEl, bEl, W, gkEl) {
     ${hasGk && !gkEl ? `<div><h3 class="bgh">Вратари</h3>${gkCard}</div>` : ''}</div>`;
   // the squad: best keeper + four outfield players by the chosen measure (five outfield players when there are no regular keepers)
   const K = S.sq, gkIdx = new Set(T.gk.filter(r => { const pr = T.p.find(x => x[0][0] === r[0][0]); return !pr || r[1] * 2 >= pr[1]; }).map(r => r[0][0]));
-  const gk = T.gk.length ? T.gk.map(row).sort(by[K])[0] : null;
-  const field = T.p.filter(r => !gkIdx.has(r[0][0])).map(row).sort(by[K]).slice(0, gk ? 4 : 5);
+  const okK = r => K !== 'ix' || r.ix != null;
+  const gk = T.gk.length ? T.gk.map(row).filter(okK).sort(by[K])[0] || null : null;
+  const field = T.p.filter(r => !gkIdx.has(r[0][0])).map(row).filter(okK).sort(by[K]).slice(0, gk ? 4 : 5);
   const all = [...field, ...(gk ? [gk] : [])], avg = k => all.reduce((a, r) => a + r[k], 0) / all.length;
-  const chip = (r, glove) => `<button class="chip" type="button" data-n="${esc(r.ids[0])}"><i class="cav">${ICON_P}${AVI(PL[r.ids[0]])}</i><b>${glove ? '🧤 ' : ''}${esc(N[r.ids[0]] || '@' + r.ids[0])}</b><span>${dec(r[K], 2)}</span></button>`;
+  const chip = (r, glove) => `<button class="chip" type="button" data-n="${esc(r.ids[0])}"><i class="cav">${ICON_P}${AVI(PL[r.ids[0]])}</i><b>${glove ? '🧤 ' : ''}${esc(N[r.ids[0]] || '@' + r.ids[0])}</b><span>${K === 'ix' ? sgn(r.ix, 2) : dec(r[K], 2)}</span></button>`;
   const rows = gk ? [field.slice(0, 2), field.slice(2, 4)] : [field.slice(0, 2), field.slice(2, 4), field.slice(4, 5)];
-  sqEl.innerHTML = all.length < 5 ? '' : `<div class="ch"><h3>${W.sq}</h3>${sw('sq', [['pts', 'Очки'], ['gf', 'Забитые'], ['ga', 'Пропущенные']])}</div>
+  sqEl.innerHTML = all.length < 5 ? '' : `<div class="ch"><h3>${W.sq}</h3>${sw('sq', [['pts', 'Очки'], ['gf', 'Забитые'], ['ga', 'Пропущенные'], ['ix', 'Индекс']])}</div>
     <div class="sqg"><div class="pitch"><div class="ln"></div><div class="cc"></div><div class="bx"></div>${rows.map(r => `<div class="prow">${r.map(x => chip(x)).join('')}</div>`).join('')}${gk ? `<div class="prow">${chip(gk, true)}</div>` : ''}</div>
     <div><div class="sqs"><div class="kpi"><strong>${dec(avg('pts'), 2)}</strong><span>очка за матч</span></div><div class="kpi"><strong>${dec(avg('gf'), 2)}</strong><span>забито за матч</span></div><div class="kpi"><strong>${dec(avg('ga'), 2)}</strong><span>пропущено за матч</span></div></div>
-    <p class="rule" style="margin:10px 2px 0;font-size:13px;color:var(--sub)">Средние по сборной. На плашке — ${K === 'pts' ? 'очки' : K === 'gf' ? 'забитые' : 'пропущенные'} команды игрока за матч${K === 'ga' ? ', чем меньше, тем лучше' : ''}.</p></div></div>`;
+    <p class="rule" style="margin:10px 2px 0;font-size:13px;color:var(--sub)">Средние по сборной. На плашке — ${K === 'ix' ? W.ixNote : `${K === 'pts' ? 'очки' : K === 'gf' ? 'забитые' : 'пропущенные'} команды игрока за матч${K === 'ga' ? ', чем меньше, тем лучше' : ''}`}.</p></div></div>`;
   sqEl.hidden = all.length < 5;
 }
 let pickY = null;
