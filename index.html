@@ -796,7 +796,7 @@ function today() {
   const lead = LV.final.map((f, i) => [f.p[0], i]).sort((a, b) => b[0] - a[0])[0];
   $('#t-sum').textContent = `Идёт игра: сыграно ${LV.played} из 12 матчей. ${C2[lead[1]].name} первым будет с вероятностью ${Math.round(lead[0] * 100)}%.`;
   document.querySelectorAll('#t-lineups .tpt').forEach((el, i) => {
-    el.querySelector('.pl').textContent = LV.now[i].Pts; el.querySelectorAll('small')[0].textContent = `1-е место ${Math.round(LV.final[i].p[0] * 100)}% · к концу ≈ ${dec(LV.final[i].xPts, 0)} оч.`;
+    el.querySelector('.pl').textContent = LV.now[i].Pts; el.querySelectorAll('small')[0].textContent = `1-е место ${LV.final[i].p[0] > 0 && LV.final[i].p[0] < 0.005 ? '<1' : Math.round(LV.final[i].p[0] * 100)}% · к концу ≈ ${dec(LV.final[i].xPts, 0)} оч.`;
     el.querySelectorAll('small')[1].textContent = 'очков сейчас'; el.querySelector('.p1b i').style.width = Math.round(LV.final[i].p[0] * 100) + '%'; });
   const pc = (x, hi) => `<span class="lvp${hi ? ' hi' : ''}">${x < 0.005 ? '—' : Math.round(x * 100) + '%'}</span>`;
   $('#t-table').innerHTML = `<thead><tr><th>Команда</th><th class="r">В-Н-П</th><th class="r hm">Мячи</th><th class="r">Очки</th><th class="r hm">К концу</th><th class="r">1-е</th><th class="r">2-е</th><th class="r">3-е</th></tr></thead><tbody>${C2.map((t, i) => ({t, n: LV.now[i], f: LV.final[i]})).sort((a, b) => b.n.Pts - a.n.Pts || (b.n.GF - b.n.GA) - (a.n.GF - a.n.GA) || b.f.xPts - a.f.xPts).map(({t, n, f}) =>
